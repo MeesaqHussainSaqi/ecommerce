@@ -60,6 +60,24 @@ class User extends Authenticatable
 
         $rules = match ($method) {
             'POST' => [
+                'username' => 'required|unique:users|min:3|max:100',
+                'first_name' => 'required|min:3|max:100',
+                'last_name' => 'required|min:3|max:100',
+                'email' => 'required|email|unique:users',
+                'phone' => 'required|unique:users',
+                'password' => 'required|min:8|confirmed',
+                'password_confirmation' => 'required'
+            ],
+            'PUT' => [
+                'username' => 'sometimes|unique:users,username,'.$request->id,
+                'first_name' => 'sometimes|min:3|max:100',
+                'last_name' => 'sometimes|min:3|max:100',
+                'email' => 'sometimes|email|unique:users,email,'.$request->id,
+                'phone' => 'sometimes|unique:users,phone,'.$request->id,
+                'password' => 'sometimes|min:8|confirmed',
+                'password_confirmation' => 'sometimes|required_with:password'
+            ],
+            'POST' => [
                 'username' => [
                     'required',
                     // Rule::unique('users')->where(function ($query) {
