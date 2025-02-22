@@ -13,8 +13,6 @@ use Exception;
 class UserController extends Controller
 {
     private $user;
-    
-
     public function __construct(UserInterface $user)
     {
         $this->user = $user;
@@ -23,12 +21,16 @@ class UserController extends Controller
 
     public function index()
     {
-        return response()->json($this->user->all());
+        // return response()->json($this->user->all());
+    }
+    public function all(Request $request)
+    {
+        return $this->user->all($request);
     }
 
     public function show($id)
     {
-        return response()->json($this->user->find($id));
+        return $this->user->find($id);
     }
 
     public function store(Request $request)
@@ -36,23 +38,12 @@ class UserController extends Controller
         try{
             $validationResponse = $this->validateRequest($request);
             if ($validationResponse !== null) {
-                // If there's a validation response, return it immediately
                 return $validationResponse;
             }
-            $createdUser =  $this->user->create($request->all());
-            $code = Constants::HTTP_CREATED;
-            $response = Utilities::BuildSuccessResponse(
-                Constants::Success,
-                $code,
-                "Successfully created.",
-                $createdUser->toArray()
-            );
-            return response()->json($response, $code);
-            // Log::info('User created: ' . gettype($createdUser));
+            return $this->user->create($request->all());
         } catch (Exception $e) {
             return catchErrorResponse($e);
         }
-        
     }
 
     public function update(Request $request, $id)

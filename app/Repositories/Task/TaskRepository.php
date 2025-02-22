@@ -6,7 +6,7 @@ use App\Repositories\User\UserInterface;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
-class UserRepository extends BaseRepository implements UserInterface
+class TaskRepository extends BaseRepository implements TaskInterface
 {
     /**
      * Define the model for the repository.
