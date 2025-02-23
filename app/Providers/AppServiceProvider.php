@@ -17,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(BaseInterface::class, BaseRepository::class);
         $this->app->bind(UserInterface::class, UserRepository::class);
+        $this->app->bind(\App\Repositories\Auth\AuthInterface::class, \App\Repositories\Auth\AuthRepository::class);
     }
 
     /**
