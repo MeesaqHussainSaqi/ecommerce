@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers;
@@ -8,13 +7,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Repositories\User\UserInterface;
+use App\Repositories\Auth\AuthInterface;
 
 class AuthController extends Controller
 {
+    protected $authRepository;
     protected $userRepository;
 
-    public function __construct(UserInterface $userRepository)
+    public function __construct(AuthInterface $authRepository, UserInterface $userRepository)
     {
+        $this->authRepository = $authRepository;
         $this->userRepository = $userRepository;
     }
 
@@ -44,25 +46,27 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
-
-        if (!Auth::attempt($validated)) {
-            return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+        try {
+            $validationResponse = $this->validateRequest($request);
+            if ($validationResponse !== null) {
+                return $validationResponse;
+            }
+            
+            $credentials = $request->only(['email', 'password']);
+            $user = $this->authRepository->login($credentials);
+            
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid credentials'
+                ], 401);
+            }
+            
+            return $user;
+            
+        } catch (Exception $e) {
+            return catchErrorResponse($e);
         }
-
-        $user = User::where('email', $request->email)->first();
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'data' => $user,
-            'access_token' => $token,
-            'token_type' => 'Bearer'
-        ]);
     }
 
     public function logout(Request $request)
