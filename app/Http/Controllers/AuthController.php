@@ -20,20 +20,26 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $validated = $request->validate(User::Rules($request));
-        
-        $data = $request->all();
-        $data['password'] = Hash::make($data['password']);
-        
-        $user = $this->userRepository->create($data);
-        
-        $token = $user->createToken('auth_token')->plainTextToken;
-        
-        return response()->json([
-            'data' => $user,
-            'access_token' => $token,
-            'token_type' => 'Bearer'
-        ]);
+        try {
+            $validationResponse = $this->validateRequest($request);
+            if ($validationResponse !== null) {
+                return $validationResponse;
+            }
+            
+            $data = $request->all();
+            $data['password'] = Hash::make($data['password']);
+            
+            $user = $this->userRepository->create($data);
+            $token = $user->createToken('auth_token')->plainTextToken;
+            
+            $user->access_token = $token;
+            $user->token_type = 'Bearer';
+            
+            return $user;
+            
+        } catch (Exception $e) {
+            return catchErrorResponse($e);
+        }
     }
 
     public function login(Request $request)
