@@ -19,42 +19,56 @@ class AuthController extends Controller
     {
         $this->authRepository = $authRepository;
         $this->userRepository = $userRepository;
+        $this->model = new User();
     }
 
+    // public function register(Request $request)
+    // {
+    //     try {
+    //         $validator = Validator::make($request->all(), [
+    //             'name' => 'required|string|max:255',
+    //             'email' => 'required|string|email|max:255|unique:users',
+    //             'password' => 'required|string|min:6|confirmed',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json(['errors' => $validator->errors()], 422);
+    //         }
+
+    //         $data = $request->all();
+    //         $data['password'] = Hash::make($data['password']);
+
+    //         $user = $this->userRepository->create($data);
+    //         $token = $user->createToken('auth_token')->plainTextToken;
+
+    //         $user->access_token = $token;
+    //         $user->token_type = 'Bearer';
+
+    //         return $user;
+
+    //     } catch (Exception $e) {
+    //         return catchErrorResponse($e);
+    //     }
+    // }
     public function register(Request $request)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+        try{
+            $validationResponse = $this->validateRequest($request);
+            if ($validationResponse !== null) {
+                return $validationResponse;
             }
-
-            $data = $request->all();
-            $data['password'] = Hash::make($data['password']);
-
-            $user = $this->userRepository->create($data);
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            $user->access_token = $token;
-            $user->token_type = 'Bearer';
-
-            return $user;
-
+            return $this->userRepository->create($request->all());
         } catch (Exception $e) {
             return catchErrorResponse($e);
         }
     }
 
+
     public function login(Request $request)
     {
-        try {
+        // try {
             $validator = Validator::make($request->all(), [
-                'email' => 'required|string|email|max:255',
+                'username' => 'required|string',
                 'password' => 'required|string|min:6',
             ]);
 
@@ -62,7 +76,7 @@ class AuthController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $credentials = $request->only(['email', 'password']);
+            $credentials = $request->only(['username', 'password']);
             $user = $this->authRepository->login($credentials);
 
             if (!$user) {
@@ -74,9 +88,9 @@ class AuthController extends Controller
 
             return $user;
 
-        } catch (Exception $e) {
-            return catchErrorResponse($e);
-        }
+        // } catch (Exception $e) {
+        //     return catchErrorResponse($e);
+        // }
     }
 
     public function logout(Request $request)
