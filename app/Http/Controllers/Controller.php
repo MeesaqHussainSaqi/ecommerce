@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Config\Constants;
+use App\Configurations\Constants;
+use App\Utilities\Utilities;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 // use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -25,15 +26,15 @@ class Controller extends BaseController
         $errors = $validator->errors()->all();
 
         if ($validator->fails()) {
-            // $code = Constants::HTTP_BAD_REQUEST; // 400 couldn't process
-            // $response = Utilities::BuildBadResponse(
-            //     Constants::Error,
-            //     $code,
-            //     "Validation failed.",
-            //     $errors
-            // );
+            $code = Constants::HTTP_BAD_REQUEST; // 400 couldn't process
+            $response = Utilities::BuildBadResponse(
+                Constants::Error,
+                $code,
+                "Validation failed.",
+                $errors
+            );
 
-            return response()->json($errors);
+            return response()->json($response);
         }
     }
 }

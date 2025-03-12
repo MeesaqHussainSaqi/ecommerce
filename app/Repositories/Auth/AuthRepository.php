@@ -24,13 +24,22 @@ class AuthRepository extends BaseRepository implements AuthInterface
 
     public function login(array $credentials)
     {
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $user->access_token = $user->createToken('auth_token')->plainTextToken;
-            $user->token_type = 'Bearer';
-            return $user;
+        $user = User::where('username', $credentials['username'])->first();
+        if ($user) {
+            if (Hash::check($credentials['password'], $user->password)) {
+                $user->access_token = $user->createToken('auth_token')->plainTextToken;
+                $user->token_type = 'Bearer';
+                return $user;
+            }
         }
-        return null;
+         return null;
+        // if (Auth::attempt($credentials)) {
+        //     $user = Auth::user();
+            // $user->access_token = $user->createToken('auth_token')->plainTextToken;
+            // $user->token_type = 'Bearer';
+            // return $user;
+        // }
+        // return null;
     }
 
     public function logout()
