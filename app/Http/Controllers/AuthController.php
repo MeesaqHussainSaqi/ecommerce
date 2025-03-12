@@ -9,6 +9,8 @@ use App\Repositories\User\UserInterface;
 use App\Repositories\Auth\AuthInterface;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use App\Utilities\Utilities;
+use App\Configurations\Constants;
 
 class AuthController extends Controller
 {
@@ -24,27 +26,22 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+            $validationResponse = $this->validateRequest($request);
+            if ($validationResponse !== null) {
+                return $validationResponse;
             }
-
+            
             $data = $request->all();
             $data['password'] = Hash::make($data['password']);
-
+            
             $user = $this->userRepository->create($data);
             $token = $user->createToken('auth_token')->plainTextToken;
-
+            
             $user->access_token = $token;
             $user->token_type = 'Bearer';
-
+            
             return $user;
-
+            
         } catch (Exception $e) {
             return catchErrorResponse($e);
         }
@@ -53,27 +50,23 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|string|email|max:255',
-                'password' => 'required|string|min:6',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+            $validationResponse = $this->validateRequest($request);
+            if ($validationResponse !== null) {
+                return $validationResponse;
             }
-
+            
             $credentials = $request->only(['email', 'password']);
             $user = $this->authRepository->login($credentials);
-
+            
             if (!$user) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Invalid credentials'
                 ], 401);
             }
-
+            
             return $user;
-
+            
         } catch (Exception $e) {
             return catchErrorResponse($e);
         }
@@ -86,5 +79,33 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logged out successfully'
         ]);
+    }
+    
+    private function validateRequest(Request $request)
+    {
+        $user = new User();
+        $rules = [];
+        $messages = [];
+        
+        if ($request->route()->getName() === 'auth.register') {
+            $rules = $user->Rules($request);
+            $messages = $user->Messages($request);
+        } else if ($request->route()->getName() === 'auth.login') {
+            $rules = [
+                'email' => 'required|string|email|max:255',
+                'password' => 'required|string|min:6',
+            ];
+            $messages = $user->Messages($request);
+        }
+        
+        $validator = Validator::make($request->all(), $rules, $messages);
+        
+        if ($validator->fails()) {
+            $code = Constants::HTTP_BAD_REQUEST;
+            $response = Utilities::BuildBaseResponse(Constants::Error, $code, "Validation Error", $validator->errors());
+            return response()->json($response, $code);
+        }
+        
+        return null;
     }
 }
